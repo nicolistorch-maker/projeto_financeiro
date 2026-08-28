@@ -1,0 +1,12 @@
+services:
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meu_controle_financeiro
+    ports:
+      - "8080:80"
+    volumes:
+      - ./www:/var/www/html
+    restart: unless-stopped
