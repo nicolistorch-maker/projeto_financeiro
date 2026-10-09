@@ -4,6 +4,7 @@ session_start();
 
 include("conexao.php");
 
+
 if (!isset($_SESSION["id_usuario"])) {
 
     header("Location: index.php?pagina=login");
@@ -11,11 +12,18 @@ if (!isset($_SESSION["id_usuario"])) {
 
 }
 
+if ($_SERVER["REQUEST_METHOD"] != "POST") {
+
+    header("Location: perfil.php");
+    exit;
+
+}
+
+
 $id_usuario = $_SESSION["id_usuario"];
 
-$nome = $_POST["nome"];
-$senha = $_POST["senha"];
-
+$nome = trim($_POST["nome"] ?? "");
+$senha = $_POST["senha"] ?? "";
 if (empty($nome)) {
 
     die("O nome não pode ficar vazio.");
