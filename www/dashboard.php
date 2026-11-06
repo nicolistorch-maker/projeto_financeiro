@@ -130,7 +130,7 @@ while ($linha = mysqli_fetch_assoc($resultado)) {
 
 mysqli_stmt_close($stmt);
 
-/* PREPARAR OS DADOS DO GRÁFICO */
+/* PREPARAR A ESCALA DO GRÁFICO DE BARRAS */
 
 $valores_receitas = array_values($receitas_mensais);
 $valores_despesas = array_values($despesas_mensais);
@@ -141,40 +141,12 @@ $maior_valor = max(
     max($valores_despesas)
 );
 
-/* GERAR OS PONTOS DAS LINHAS DO GRÁFICO */
-
-function gerar_pontos_grafico($valores, $maior_valor)
-{
-    $pontos = [];
-    $quantidade = count($valores);
-
-    foreach ($valores as $indice => $valor) {
-
-        $x = 60 + (
-            $indice * (780 / max(1, $quantidade - 1))
-        );
-
-        $y = 240 - (
-            ($valor / $maior_valor) * 190
-        );
-
-        $pontos[] = round($x, 2) . "," . round($y, 2);
-    }
-
-    return implode(" ", $pontos);
-}
-
-$pontos_receitas = gerar_pontos_grafico(
-    $valores_receitas,
-    $maior_valor
-);
-
-$pontos_despesas = gerar_pontos_grafico(
-    $valores_despesas,
-    $maior_valor
-);
+// Arredonda o limite superior para facilitar a leitura da escala.
+$limite_grafico = ceil($maior_valor / 4) * 4;
 
 /* CONSULTAR AS CINCO MOVIMENTAÇÕES MAIS RECENTES */
+
+$transacoes_recentes = [];
 
 $sql = "SELECT
             descricao,
@@ -192,8 +164,6 @@ mysqli_stmt_bind_param($stmt, "i", $id_usuario);
 mysqli_stmt_execute($stmt);
 
 $resultado_recentes = mysqli_stmt_get_result($stmt);
-
-$transacoes_recentes = [];
 
 while ($linha = mysqli_fetch_assoc($resultado_recentes)) {
     $transacoes_recentes[] = $linha;
@@ -364,50 +334,90 @@ mysqli_stmt_close($stmt);
         }
 
         .area-grafico {
-            height: 300px;
+            display: flex;
+            height: 310px;
+            padding: 15px 12px 0 0;
             border: 1px dashed #cbd5e1;
             border-radius: 5px;
             background: #fafbfc;
-            position: relative;
-            overflow: hidden;
         }
 
-        .linha-horizontal {
-            position: absolute;
-            left: 45px;
-            right: 20px;
-            height: 1px;
-            background: #e2e8f0;
+        .escala-grafico {
+            width: 75px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 10px 35px 0;
+            color: #64748b;
+            font-size: 11px;
         }
 
-        .linha1 {
-            top: 60px;
+        .barras-grafico {
+            flex: 1;
+            min-width: 0;
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
+            border-bottom: 1px solid #cbd5e1;
+            background: repeating-linear-gradient(
+                to top,
+                transparent 0,
+                transparent calc(25% - 1px),
+                #e2e8f0 calc(25% - 1px),
+                #e2e8f0 25%
+            );
         }
 
-        .linha2 {
-            top: 120px;
-        }
-
-        .linha3 {
-            top: 180px;
-        }
-
-        .linha4 {
-            top: 240px;
-        }
-
-        .grafico-svg {
-            width: 100%;
+        .grupo-mes {
+            min-width: 0;
             height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .colunas {
+            width: 100%;
+            height: calc(100% - 35px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .barra {
+            width: min(28px, 38%);
+            min-height: 0;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+
+        .barra-receita {
+            background: #3b82f6;
+        }
+
+        .barra-despesa {
+            background: #ef4444;
+        }
+
+        .mes-barra {
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 11px;
+            white-space: nowrap;
         }
 
         .legenda {
-            position: absolute;
-            bottom: 12px;
-            left: 50%;
-            transform: translateX(-50%);
             display: flex;
+            justify-content: center;
             gap: 25px;
+            margin-top: 20px;
             font-size: 12px;
             color: #64748b;
         }
@@ -415,32 +425,22 @@ mysqli_stmt_close($stmt);
         .legenda span {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+        }
+
+        .ponto-entrada,
+        .ponto-saida {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
         }
 
         .ponto-entrada {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
             background: #3b82f6;
         }
 
         .ponto-saida {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
             background: #ef4444;
-        }
-
-        .meses {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-top: 10px;
-            padding: 0 5px;
-            text-align: center;
-            color: #64748b;
-            font-size: 12px;
         }
 
         /* BOTOES */
@@ -594,11 +594,30 @@ mysqli_stmt_close($stmt);
             }
 
             .area-grafico {
-                height: 240px;
+                height: 260px;
+                padding-right: 5px;
             }
 
-            .meses {
-                font-size: 10px;
+            .escala-grafico {
+                width: 58px;
+                font-size: 9px;
+                padding-right: 6px;
+            }
+
+            .barras-grafico {
+                gap: 3px;
+            }
+
+            .colunas {
+                gap: 2px;
+            }
+
+            .mes-barra {
+                font-size: 9px;
+            }
+
+            .legenda {
+                gap: 15px;
             }
 
         }
@@ -713,92 +732,78 @@ mysqli_stmt_close($stmt);
 
             <div class="area-grafico">
 
-                <div class="linha-horizontal linha1"></div>
-                <div class="linha-horizontal linha2"></div>
-                <div class="linha-horizontal linha3"></div>
-                <div class="linha-horizontal linha4"></div>
+                <!-- Escala de valores em reais -->
 
-                <svg
-                    class="grafico-svg"
-                    viewBox="0 0 900 300"
-                    preserveAspectRatio="none"
-                    role="img"
-                    aria-label="Gráfico mensal de receitas e despesas"
-                >
+                <div class="escala-grafico">
 
-                    <!-- RECEITAS -->
+                    <?php for ($i = 4; $i >= 0; $i--): ?>
 
-                    <polyline
-                        points="<?php echo escapar_dashboard($pontos_receitas); ?>"
-                        fill="none"
-                        stroke="#3b82f6"
-                        stroke-width="4"
-                    />
+                        <span>
+                            R$ <?php echo formatar_valor_dashboard($limite_grafico * $i / 4); ?>
+                        </span>
 
-                    <!-- DESPESAS -->
+                    <?php endfor; ?>
 
-                    <polyline
-                        points="<?php echo escapar_dashboard($pontos_despesas); ?>"
-                        fill="none"
-                        stroke="#ef4444"
-                        stroke-width="4"
-                    />
+                </div>
 
-                    <!-- PONTOS DAS RECEITAS -->
+                <!-- Barras de receitas e despesas de cada mês -->
 
-                    <?php foreach ($valores_receitas as $indice => $valor): ?>
+                <div class="barras-grafico">
 
-                        <?php
-                        $x = 60 + ($indice * (780 / 6));
-                        $y = 240 - (($valor / $maior_valor) * 190);
-                        ?>
+                    <?php
 
-                        <circle
-                            cx="<?php echo $x; ?>"
-                            cy="<?php echo $y; ?>"
-                            r="5"
-                            fill="#3b82f6"
-                        />
+                    $abreviacoes_meses = [
+                        "01" => "Jan", "02" => "Fev", "03" => "Mar",
+                        "04" => "Abr", "05" => "Mai", "06" => "Jun",
+                        "07" => "Jul", "08" => "Ago", "09" => "Set",
+                        "10" => "Out", "11" => "Nov", "12" => "Dez"
+                    ];
+
+                    foreach ($receitas_mensais as $chave_mes => $receita):
+
+                        $despesa = $despesas_mensais[$chave_mes];
+
+                        $altura_receita = ($receita / $limite_grafico) * 100;
+                        $altura_despesa = ($despesa / $limite_grafico) * 100;
+
+                        $numero_mes = substr($chave_mes, 5, 2);
+                        $ano_mes = substr($chave_mes, 2, 2);
+
+                        $nome_mes = $abreviacoes_meses[$numero_mes] . "/" . $ano_mes;
+
+                    ?>
+
+                        <div class="grupo-mes">
+
+                            <div class="colunas">
+
+                                <div
+                                    class="barra barra-receita"
+                                    style="height: <?php echo $altura_receita; ?>%;"
+                                    title="Receitas: R$ <?php echo formatar_valor_dashboard($receita); ?>"
+                                ></div>
+
+                                <div
+                                    class="barra barra-despesa"
+                                    style="height: <?php echo $altura_despesa; ?>%;"
+                                    title="Despesas: R$ <?php echo formatar_valor_dashboard($despesa); ?>"
+                                ></div>
+
+                            </div>
+
+                            <div class="mes-barra">
+                                <?php echo escapar_dashboard($nome_mes); ?>
+                            </div>
+
+                        </div>
 
                     <?php endforeach; ?>
 
-                    <!-- PONTOS DAS DESPESAS -->
-
-                    <?php foreach ($valores_despesas as $indice => $valor): ?>
-
-                        <?php
-                        $x = 60 + ($indice * (780 / 6));
-                        $y = 240 - (($valor / $maior_valor) * 190);
-                        ?>
-
-                        <circle
-                            cx="<?php echo $x; ?>"
-                            cy="<?php echo $y; ?>"
-                            r="5"
-                            fill="#ef4444"
-                        />
-
-                    <?php endforeach; ?>
-
-                </svg>
+                </div>
 
             </div>
 
-            <!-- MESES -->
-
-            <div class="meses">
-
-                <?php foreach ($meses as $mes): ?>
-
-                    <span>
-                        <?php echo escapar_dashboard($mes); ?>
-                    </span>
-
-                <?php endforeach; ?>
-
-            </div>
-
-            <div class="legenda" style="position: static; transform: none; justify-content: center; margin-top: 20px;">
+            <div class="legenda">
 
                 <span>
                     <span class="ponto-entrada"></span>
@@ -859,7 +864,7 @@ mysqli_stmt_close($stmt);
 
                     <tbody>
 
-                        <?php if (count($transacoes_recentes) === 0): ?>
+                        <?php if (empty($transacoes_recentes)): ?>
 
                             <tr>
                                 <td colspan="4" class="vazio">
