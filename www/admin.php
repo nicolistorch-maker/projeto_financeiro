@@ -3,22 +3,36 @@
 session_start();
 
 if (!isset($_SESSION["id_usuario"])) {
-
     header("Location: index.php?pagina=login");
     exit;
-
 }
 
 if ($_SESSION["perfil_usuario"] != "admin") {
-
     echo "Acesso negado. Esta área é exclusiva para administradores.";
     exit;
-
 }
 
-$pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'admin';
+include("conexao.php");
+
+// CONTAR USUARIOS
+
+$sql_usuarios = "SELECT COUNT(*) AS total FROM usuarios";
+$resultado_usuarios = mysqli_query($conexao, $sql_usuarios);
+$total_usuarios = mysqli_fetch_assoc($resultado_usuarios);
+
+// CONTAR TRANSACOES
+
+$sql_transacoes = "SELECT COUNT(*) AS total FROM transacoes";
+$resultado_transacoes = mysqli_query($conexao, $sql_transacoes);
+$total_transacoes = mysqli_fetch_assoc($resultado_transacoes);
+
+// LISTAR USUARIOS
+
+$sql_lista = "SELECT * FROM usuarios ORDER BY id DESC";
+$resultado_lista = mysqli_query($conexao, $sql_lista);
 
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -27,7 +41,7 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'admin';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Meu Controle Financeiro - Administração</title>
+    <title>Administração - Meu Controle Financeiro</title>
 
     <style>
 
@@ -39,8 +53,8 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'admin';
         }
 
         body {
-            background: #f5f7fb;
-            color: #111827;
+            background: #090909;
+            color: #ffffff;
         }
 
         .container {
@@ -50,77 +64,92 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'admin';
         }
 
         .navbar {
-            background: #1e293b;
-            color: white;
-            padding: 13px 16px;
-            border-radius: 5px;
+            background: #151515;
+            border: 1px solid #292929;
+            border-radius: 10px;
+            padding: 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 25px;
         }
 
         .logo {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
+            color: #c084fc;
         }
 
         .menu {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
 
         .menu a {
-            color: white;
+            color: #cccccc;
             text-decoration: none;
             font-size: 13px;
         }
 
-        .menu a:hover,
-        .menu .ativo {
-            font-weight: bold;
+        .menu a:hover {
+            color: #c084fc;
         }
 
         .menu .sair {
             color: #f87171;
         }
 
+        .titulo {
+            margin-bottom: 22px;
+        }
+
+        .titulo h1 {
+            font-size: 24px;
+            margin-bottom: 7px;
+        }
+
+        .titulo p {
+            color: #999999;
+            font-size: 14px;
+        }
+
         .estatisticas {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 30px;
+            gap: 18px;
+            margin-bottom: 25px;
         }
 
         .estatistica {
-            background: #f8fafc;
-            border: 1px solid #dbe3ec;
-            border-left: 4px solid #1e293b;
-            border-radius: 6px;
-            padding: 18px;
+            background: #151515;
+            border: 1px solid #292929;
+            border-left: 4px solid #a855f7;
+            border-radius: 10px;
+            padding: 22px;
         }
 
         .estatistica p {
-            color: #64748b;
+            color: #aaaaaa;
             font-size: 13px;
-            margin-bottom: 6px;
+            margin-bottom: 10px;
         }
 
         .estatistica strong {
-            font-size: 20px;
+            font-size: 26px;
+            color: #ffffff;
         }
 
         .usuarios {
-            background: white;
-            border: 1px solid #dbe3ec;
-            border-radius: 6px;
-            padding: 15px;
+            background: #151515;
+            border: 1px solid #292929;
+            border-radius: 10px;
+            padding: 20px;
         }
 
         .usuarios h2 {
-            font-size: 15px;
-            margin-bottom: 18px;
+            font-size: 17px;
+            margin-bottom: 20px;
         }
 
         .tabela-container {
@@ -135,72 +164,65 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'admin';
         }
 
         th {
-            background: #eef2f7;
-            color: #334155;
+            background: #222222;
+            color: #c084fc;
             text-align: left;
-            padding: 10px;
+            padding: 13px 10px;
         }
 
         td {
-            padding: 10px;
-            border-bottom: 1px solid #dbe3ec;
-            vertical-align: middle;
+            padding: 13px 10px;
+            border-bottom: 1px solid #303030;
+            color: #dddddd;
         }
 
         .perfil {
             display: inline-block;
-            padding: 4px 7px;
-            border-radius: 4px;
-            color: white;
+            padding: 5px 9px;
+            border-radius: 5px;
             font-size: 11px;
             font-weight: bold;
         }
 
         .comum {
-            background: #64748b;
+            background: #374151;
+            color: #ffffff;
         }
 
         .admin {
-            background: #a855f7;
+            background: #6b21a8;
+            color: #ffffff;
         }
 
         .status {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            color: white;
+            padding: 5px 9px;
+            border-radius: 5px;
             font-size: 11px;
             font-weight: bold;
         }
 
         .ativo {
-            background: #10b981;
+            background: #14532d;
+            color: #86efac;
         }
 
         .bloqueado {
-            background: #ef4444;
+            background: #7f1d1d;
+            color: #fca5a5;
         }
 
-        .acoes a {
-            color: #2563eb;
-            text-decoration: none;
-            font-size: 12px;
-            margin-right: 5px;
-        }
-
-        .acoes a:hover {
-            text-decoration: underline;
-        }
-
-        .soberano {
-            color: #94a3b8;
+        .vazio {
+            text-align: center;
+            color: #999999;
+            padding: 25px;
         }
 
         @media (max-width: 700px) {
 
             .navbar {
                 flex-direction: column;
-                gap: 12px;
+                gap: 15px;
             }
 
             .menu {
@@ -237,73 +259,54 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'admin';
         <nav class="navbar">
 
             <div class="logo">
-                ⚙ Painel de Administração
+                ⚙ Painel Administrativo
             </div>
 
             <div class="menu">
 
-                <a href="#">
-                    Estatísticas
-                </a>
+                <a href="admin.php">Painel</a>
 
-                <span>|</span>
-
-                <a href="#" class="ativo">
-                    Usuários
-                </a>
-
-                <span>|</span>
-
-                <a href="#">
-                    Categorias
-                </a>
-
-                <span>|</span>
-
-                <a href="index.php" class="sair">
-                    Sair
-                </a>
+                <a href="logout.php" class="sair">Sair</a>
 
             </div>
 
         </nav>
 
+        <section class="titulo">
+
+            <h1>Bem-vindo, Administrador!</h1>
+
+            <p>Gerencie os usuários e acompanhe o sistema.</p>
+
+        </section>
 
         <section class="estatisticas">
 
             <div class="estatistica">
 
-                <p>
-                    Total de Usuários
-                </p>
+                <p>Total de usuários cadastrados</p>
 
                 <strong>
-                    1.248 cadastros
+                    <?php echo $total_usuarios["total"]; ?>
                 </strong>
 
             </div>
 
-
             <div class="estatistica">
 
-                <p>
-                    Registros Totais
-                </p>
+                <p>Total de transações registradas</p>
 
                 <strong>
-                    45.210 transações
+                    <?php echo $total_transacoes["total"]; ?>
                 </strong>
 
             </div>
 
         </section>
 
-
         <section class="usuarios">
 
-            <h2>
-                Gerenciamento de Acessos
-            </h2>
+            <h2>Gerenciamento de Usuários</h2>
 
             <div class="tabela-container">
 
@@ -313,124 +316,83 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'admin';
 
                         <tr>
                             <th>ID</th>
-                            <th>Nome do Usuário</th>
+                            <th>Nome</th>
                             <th>E-mail</th>
                             <th>Perfil</th>
                             <th>Status</th>
-                            <th>Ações Permitidas</th>
                         </tr>
 
                     </thead>
 
                     <tbody>
 
-                        <tr>
+                        <?php if (mysqli_num_rows($resultado_lista) > 0) { ?>
 
-                            <td>001</td>
+                            <?php while ($usuario = mysqli_fetch_assoc($resultado_lista)) { ?>
 
-                            <td>
-                                Carlos<br>
-                                Eduardo<br>
-                                Souza
-                            </td>
+                                <tr>
 
-                            <td>
-                                carlos@email.com
-                            </td>
+                                    <td>
+                                        <?php echo $usuario["id"]; ?>
+                                    </td>
 
-                            <td>
-                                <span class="perfil comum">
-                                    Comum
-                                </span>
-                            </td>
+                                    <td>
+                                        <?php echo htmlspecialchars($usuario["nome"]); ?>
+                                    </td>
 
-                            <td>
-                                <span class="status ativo">
-                                    Ativo
-                                </span>
-                            </td>
+                                    <td>
+                                        <?php echo htmlspecialchars($usuario["email"]); ?>
+                                    </td>
 
-                            <td class="acoes">
-                                <a href="#">
-                                    [Bloquear]
-                                </a>
-                                <a href="#">
-                                    [Excluir]
-                                </a>
-                            </td>
+                                    <td>
 
-                        </tr>
+                                        <?php if ($usuario["perfil"] == "admin") { ?>
 
+                                            <span class="perfil admin">
+                                                Administrador
+                                            </span>
 
-                        <tr>
+                                        <?php } else { ?>
 
-                            <td>002</td>
+                                            <span class="perfil comum">
+                                                Usuário comum
+                                            </span>
 
-                            <td>
-                                Amanda<br>
-                                Ribeiro
-                            </td>
+                                        <?php } ?>
 
-                            <td>
-                                amanda@financeiro.com
-                            </td>
+                                    </td>
 
-                            <td>
-                                <span class="perfil comum">
-                                    Comum
-                                </span>
-                            </td>
+                                    <td>
 
-                            <td>
-                                <span class="status bloqueado">
-                                    Bloqueado
-                                </span>
-                            </td>
+                                        <?php if ($usuario["status"] == "ativo") { ?>
 
-                            <td class="acoes">
-                                <a href="#">
-                                    [Desbloquear]
-                                </a>
-                                <a href="#">
-                                    [Excluir]
-                                </a>
-                            </td>
+                                            <span class="status ativo">
+                                                Ativo
+                                            </span>
 
-                        </tr>
+                                        <?php } else { ?>
 
+                                            <span class="status bloqueado">
+                                                Bloqueado
+                                            </span>
 
-                        <tr>
+                                        <?php } ?>
 
-                            <td>003</td>
+                                    </td>
 
-                            <td>
-                                Administrador<br>
-                                Master
-                            </td>
+                                </tr>
 
-                            <td>
-                                admin@meucontrole.com
-                            </td>
+                            <?php } ?>
 
-                            <td>
-                                <span class="perfil admin">
-                                    Admin
-                                </span>
-                            </td>
+                        <?php } else { ?>
 
-                            <td>
-                                <span class="status ativo">
-                                    Ativo
-                                </span>
-                            </td>
+                            <tr>
+                                <td colspan="5" class="vazio">
+                                    Nenhum usuário cadastrado.
+                                </td>
+                            </tr>
 
-                            <td>
-                                <span class="soberano">
-                                    Soberano
-                                </span>
-                            </td>
-
-                        </tr>
+                        <?php } ?>
 
                     </tbody>
 
