@@ -217,6 +217,28 @@ $resultado_lista = mysqli_query($conexao, $sql_lista);
             color: #999999;
             padding: 25px;
         }
+        .acoes form {
+    display: inline;
+}
+
+.botao-status {
+    border: none;
+    padding: 7px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.bloquear {
+    background: #7f1d1d;
+    color: #ffffff;
+}
+
+.desbloquear {
+    background: #14532d;
+    color: #ffffff;
+}
 
         @media (max-width: 700px) {
 
@@ -379,6 +401,42 @@ $resultado_lista = mysqli_query($conexao, $sql_lista);
                                         <?php } ?>
 
                                     </td>
+                                    <td class="acoes">
+
+    <?php if ($usuario["perfil"] == "comum") { ?>
+
+        <form action="alterar_status.php" method="POST">
+
+            <input type="hidden" name="id_usuario"
+                   value="<?php echo $usuario["id"]; ?>">
+
+            <?php if ($usuario["status"] == "ativo") { ?>
+
+                <input type="hidden" name="status" value="bloqueado">
+
+                <button type="submit" class="botao-status bloquear">
+                    Bloquear
+                </button>
+
+            <?php } else { ?>
+
+                <input type="hidden" name="status" value="ativo">
+
+                <button type="submit" class="botao-status desbloquear">
+                    Desbloquear
+                </button>
+
+            <?php } ?>
+
+        </form>
+
+    <?php } else { ?>
+
+        <span class="soberano">Protegido</span>
+
+    <?php } ?>
+
+</td>
 
                                 </tr>
 
@@ -387,8 +445,7 @@ $resultado_lista = mysqli_query($conexao, $sql_lista);
                         <?php } else { ?>
 
                             <tr>
-                                <td colspan="5" class="vazio">
-                                    Nenhum usuário cadastrado.
+                                <<td colspan="6" class="vazio">
                                 </td>
                             </tr>
 
