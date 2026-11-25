@@ -418,6 +418,7 @@ elseif($pagina=="login"){
 }
 
 
+
 /* CADASTRO */
 
 elseif($pagina=="cadastro"){
@@ -432,56 +433,44 @@ elseif($pagina=="cadastro"){
 
     <form action="cadastrar.php" method="POST">
 
-    <label>
-        Nome Completo
-    </label>
+        <label>
+            Nome Completo
+        </label>
 
-    <input
-        type="text"
-        name="nome"
-        placeholder="Ex: João Silva"
-        required
-    >
+        <input
+            type="text"
+            name="nome"
+            placeholder="Ex: João Silva"
+            required
+        >
 
-    <form action="login.php" method="POST">
+        <label>
+            E-mail
+        </label>
 
-    <label>
-        E-mail
-    </label>
+        <input
+            type="email"
+            name="email"
+            placeholder="seu@email.com"
+            required
+        >
 
-    <input
-        type="email"
-        name="email"
-        placeholder="seu@email.com"
-        required
-    >
+        <label>
+            Senha
+        </label>
 
-    <label>
-        Senha
-    </label>
+        <input
+            type="password"
+            name="senha"
+            placeholder="••••••••"
+            required
+        >
 
-    <input
-        type="password"
-        name="senha"
-        placeholder="••••••••"
-        required
-    >
+        <button type="submit" class="verde">
+            Criar Minha Conta
+        </button>
 
-    <button type="submit">
-        Entrar
-    </button>
-
-</form>
-
-    <button
-        type="submit"
-        class="verde"
-    >
-        Criar Minha Conta
-    </button>
-
-</form>
-
+    </form>
 
     <div class="link">
 
@@ -493,10 +482,10 @@ elseif($pagina=="cadastro"){
 
 </div>
 
-
 <?php
 
 }
+
 
 
 /* RECUPERAÇÃO */

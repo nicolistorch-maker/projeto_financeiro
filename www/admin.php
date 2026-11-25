@@ -286,12 +286,13 @@ $resultado_lista = mysqli_query($conexao, $sql_lista);
 
             <div class="menu">
 
-                <a href="admin.php">Painel</a>
+    <a href="admin.php">Painel</a>
 
-                <a href="logout.php" class="sair">Sair</a>
+    <a href="categorias.php">Gerenciar Categorias</a>
 
-            </div>
+    <a href="logout.php" class="sair">Sair</a>
 
+</div>
         </nav>
 
         <section class="titulo">
@@ -336,16 +337,16 @@ $resultado_lista = mysqli_query($conexao, $sql_lista);
 
                     <thead>
 
-                        <tr>
-                            <th>ID</th>
-                            <th>Nome</th>
-                            <th>E-mail</th>
-                            <th>Perfil</th>
-                            <th>Status</th>
-                        </tr>
+    <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Perfil</th>
+        <th>Status</th>
+        <th>Ações</th>
+    </tr>
 
-                    </thead>
-
+</thead>
                     <tbody>
 
                         <?php if (mysqli_num_rows($resultado_lista) > 0) { ?>
@@ -444,10 +445,11 @@ $resultado_lista = mysqli_query($conexao, $sql_lista);
 
                         <?php } else { ?>
 
-                            <tr>
-                                <<td colspan="6" class="vazio">
-                                </td>
-                            </tr>
+                           <tr>
+    <td colspan="6" class="vazio">
+        Nenhum usuário cadastrado.
+    </td>
+</tr>
 
                         <?php } ?>
 
