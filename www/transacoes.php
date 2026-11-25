@@ -10,7 +10,6 @@ if (!isset($_SESSION["id_usuario"])) {
 require_once "conexao.php";
 
 $id_usuario = (int) $_SESSION["id_usuario"];
-
 $pagina = $_GET["pagina"] ?? "lancamentos";
 
 if (!in_array($pagina, ["lancamentos", "relatorios"], true)) {
@@ -45,7 +44,6 @@ function voltar_lancamentos($sucesso)
 /* CADASTRAR E EDITAR LANÇAMENTOS */
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["salvar"])) {
-
     $id_transacao = filter_input(INPUT_POST, "id_transacao", FILTER_VALIDATE_INT);
     $descricao = trim($_POST["descricao"] ?? "");
     $valor_texto = trim($_POST["valor"] ?? "");
@@ -59,7 +57,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["salvar"])) {
     }
 
     $valor = is_numeric($valor_texto) ? (float) $valor_texto : 0;
-
     $data_objeto = DateTime::createFromFormat("!Y-m-d", $data);
     $data_valida = $data_objeto && $data_objeto->format("Y-m-d") === $data;
 
@@ -82,39 +79,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["salvar"])) {
         $mensagem = "Selecione uma categoria.";
         $tipo_mensagem = "erro";
     } else {
-
         $sql_categoria = "SELECT id FROM categorias WHERE id = ? AND tipo = ?";
         $stmt_categoria = mysqli_prepare($conexao, $sql_categoria);
-
         mysqli_stmt_bind_param($stmt_categoria, "is", $categoria_id, $tipo);
         mysqli_stmt_execute($stmt_categoria);
-
         $resultado_categoria = mysqli_stmt_get_result($stmt_categoria);
 
         if (mysqli_num_rows($resultado_categoria) === 0) {
             $mensagem = "A categoria não corresponde ao tipo selecionado.";
             $tipo_mensagem = "erro";
         } else {
-
             if ($id_transacao) {
-
                 $sql = "UPDATE transacoes
                         SET categoria_id = ?, descricao = ?, valor = ?, tipo = ?, data = ?
                         WHERE id = ? AND usuario_id = ?";
-
                 $stmt = mysqli_prepare($conexao, $sql);
-
-                mysqli_stmt_bind_param(
-                    $stmt,
-                    "isdssii",
-                    $categoria_id,
-                    $descricao,
-                    $valor,
-                    $tipo,
-                    $data,
-                    $id_transacao,
-                    $id_usuario
-                );
+                mysqli_stmt_bind_param($stmt, "isdssii", $categoria_id, $descricao, $valor, $tipo, $data, $id_transacao, $id_usuario);
 
                 if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) >= 0) {
                     mysqli_stmt_close($stmt);
@@ -123,28 +103,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["salvar"])) {
                 }
 
                 mysqli_stmt_close($stmt);
-
                 $mensagem = "Não foi possível atualizar o lançamento.";
                 $tipo_mensagem = "erro";
-
             } else {
-
                 $sql = "INSERT INTO transacoes
                         (usuario_id, categoria_id, descricao, valor, tipo, data)
                         VALUES (?, ?, ?, ?, ?, ?)";
-
                 $stmt = mysqli_prepare($conexao, $sql);
-
-                mysqli_stmt_bind_param(
-                    $stmt,
-                    "iisdss",
-                    $id_usuario,
-                    $categoria_id,
-                    $descricao,
-                    $valor,
-                    $tipo,
-                    $data
-                );
+                mysqli_stmt_bind_param($stmt, "iisdss", $id_usuario, $categoria_id, $descricao, $valor, $tipo, $data);
 
                 if (mysqli_stmt_execute($stmt)) {
                     mysqli_stmt_close($stmt);
@@ -153,7 +119,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["salvar"])) {
                 }
 
                 mysqli_stmt_close($stmt);
-
                 $mensagem = "Não foi possível cadastrar o lançamento.";
                 $tipo_mensagem = "erro";
             }
@@ -166,14 +131,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["salvar"])) {
 /* EXCLUIR LANÇAMENTO */
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["excluir"])) {
-
     $id_transacao = filter_input(INPUT_POST, "id_transacao", FILTER_VALIDATE_INT);
 
     if ($id_transacao) {
-
         $sql = "DELETE FROM transacoes WHERE id = ? AND usuario_id = ?";
         $stmt = mysqli_prepare($conexao, $sql);
-
         mysqli_stmt_bind_param($stmt, "ii", $id_transacao, $id_usuario);
         mysqli_stmt_execute($stmt);
 
@@ -183,10 +145,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["excluir"])) {
         }
 
         mysqli_stmt_close($stmt);
-
         $mensagem = "Lançamento não encontrado ou sem permissão para excluí-lo.";
         $tipo_mensagem = "erro";
-
     } else {
         $mensagem = "Lançamento inválido.";
         $tipo_mensagem = "erro";
@@ -196,7 +156,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["excluir"])) {
 /* MENSAGENS */
 
 if (isset($_GET["sucesso"])) {
-
     $mensagens = [
         "cadastro" => "Lançamento cadastrado com sucesso!",
         "edicao" => "Lançamento atualizado com sucesso!",
@@ -212,22 +171,17 @@ if (isset($_GET["sucesso"])) {
 /* CARREGAR LANÇAMENTO PARA EDIÇÃO */
 
 if (isset($_GET["editar"])) {
-
     $id_editar = filter_input(INPUT_GET, "editar", FILTER_VALIDATE_INT);
 
     if ($id_editar) {
-
         $sql = "SELECT id, descricao, valor, data, tipo, categoria_id
                 FROM transacoes
                 WHERE id = ? AND usuario_id = ?";
-
         $stmt = mysqli_prepare($conexao, $sql);
         mysqli_stmt_bind_param($stmt, "ii", $id_editar, $id_usuario);
         mysqli_stmt_execute($stmt);
-
         $resultado_edicao = mysqli_stmt_get_result($stmt);
         $edicao = mysqli_fetch_assoc($resultado_edicao);
-
         mysqli_stmt_close($stmt);
 
         if (!$edicao) {
@@ -298,7 +252,6 @@ while ($linha = mysqli_fetch_assoc($resultado)) {
 }
 
 mysqli_stmt_close($stmt);
-
 $saldo = $total_receitas - $total_despesas;
 
 /* CARREGAR CATEGORIAS */
@@ -322,363 +275,405 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
 ?><!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lançamentos - Meu Controle Financeiro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lançamentos - Meu Controle Financeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
+* {
+    box-sizing: border-box;
+}
 
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f4f6f9;
-            color: #333;
-        }
+body {
+    margin: 0;
+    font-family: 'Lato', sans-serif;
+    background: #1F0B0A;
+    color: #F1E8E5;
+}
 
-        header {
-            background: #243447;
-            color: white;
-            padding: 20px 5%;
-        }
+header {
+    background: #311B1D;
+    color: #E8D9D5;
+    padding: 20px 5%;
+    border-bottom: 1px solid #563C3B;
+}
 
-        header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
+header h1 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 27px;
+    font-weight: 600;
+}
 
-        nav {
-            background: white;
-            padding: 15px 5%;
-            display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
-            box-shadow: 0 2px 5px #00000010;
-        }
+nav {
+    background: #311B1D;
+    padding: 12px 5% 17px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #563C3B;
+}
 
-        nav a {
-            text-decoration: none;
-            color: #243447;
-            font-weight: bold;
-        }
+nav a {
+    text-decoration: none;
+    color: #F1E8E5;
+    font-weight: 700;
+    padding: 9px 14px;
+    border-radius: 7px;
+    transition: background .2s ease;
+}
 
-        nav a:hover {
-            color: #16875d;
-        }
+nav a:hover, nav a:focus {
+    color: #FFFFFF;
+    background: #563C3B;
+}
 
-        .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 30px auto;
-        }
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 35px auto;
+}
 
-        .titulo {
-            margin-bottom: 25px;
-        }
+.titulo {
+    margin-bottom: 25px;
+}
 
-        .titulo h2 {
-            margin-bottom: 8px;
-        }
+h2, h3 {
+    font-family: 'Playfair Display', serif;
+    color: #E8D9D5;
+}
 
-        .titulo p {
-            color: #777;
-        }
+.titulo h2 {
+    margin-bottom: 8px;
+    font-size: 30px;
+}
 
-        .mensagem {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
+.titulo p, small {
+    color: #B9A6A3;
+}
 
-        .sucesso {
-            background: #d4edda;
-            color: #155724;
-        }
+.mensagem {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
 
-        .erro {
-            background: #f8d7da;
-            color: #721c24;
-        }
+.sucesso {
+    background: #244735;
+    color: #D9F2E2;
+}
 
-        .resumos {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 25px;
-        }
+.erro {
+    background: #592626;
+    color: #FFE0E0;
+}
 
-        .resumo {
-            background: white;
-            padding: 22px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px #00000008;
-        }
+.resumos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 25px;
+}
 
-        .resumo p {
-            margin: 0 0 12px;
-            color: #777;
-        }
+.resumo {
+    background: #311B1D;
+    padding: 22px;
+    border: 1px solid #563C3B;
+    border-radius: 10px;
+}
 
-        .resumo h3 {
-            margin: 0;
-            font-size: 24px;
-        }
+.resumo p {
+    margin: 0 0 12px;
+    color: #B9A6A3;
+}
 
-        .receita {
-            color: #16875d;
-        }
+.resumo h3 {
+    margin: 0;
+    font-size: 24px;
+}
 
-        .despesa {
-            color: #d64545;
-        }
+.receita {
+    color: #9BD6A9;
+}
 
-        .saldo {
-            color: #243447;
-        }
+.despesa {
+    color: #F0A2A2;
+}
 
-        .cartao {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px #00000008;
-        }
+.saldo {
+    color: #E8D9D5;
+}
 
-        .cartao h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
+.cartao {
+    background: #311B1D;
+    border: 1px solid #563C3B;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
 
-        .formulario {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 18px;
-        }
+.cartao h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 23px;
+}
 
-        .campo {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+.formulario {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
 
-        .campo-completo {
-            grid-column: 1 / -1;
-        }
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-        label {
-            font-weight: bold;
-            font-size: 14px;
-        }
+.campo-completo {
+    grid-column: 1 / -1;
+}
 
-        input,
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d5dbe1;
-            border-radius: 6px;
-            font-size: 15px;
-            background: white;
-        }
+label {
+    font-weight: 700;
+    font-size: 14px;
+    color: #E8D9D5;
+}
 
-        input:focus,
-        select:focus {
-            outline: 2px solid #16875d30;
-            border-color: #16875d;
-        }
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #563C3B;
+    border-radius: 6px;
+    font-family: 'Lato', sans-serif;
+    font-size: 15px;
+    background: #1F0B0A;
+    color: #F1E8E5;
+}
 
-        .opcoes-tipo {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
+input:focus, select:focus {
+    outline: none;
+    border-color: #B9A6A3;
+    box-shadow: 0 0 0 2px #B9A6A322;
+}
 
-        .opcoes-tipo label {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-weight: normal;
-        }
+input[type="radio"] {
+    accent-color: #B9A6A3;
+}
 
-        .opcoes-tipo input {
-            width: auto;
-        }
+.opcoes-tipo {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
 
-        .botoes {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 5px;
-        }
+.opcoes-tipo label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 400;
+}
 
-        button,
-        .botao {
-            display: inline-block;
-            padding: 11px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            text-decoration: none;
-            text-align: center;
-        }
+.opcoes-tipo input {
+    width: auto;
+}
 
-        .botao-principal {
-            background: #16875d;
-            color: white;
-        }
+.botoes {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
 
-        .botao-principal:hover {
-            background: #116b49;
-        }
+button, .botao {
+    display: inline-block;
+    padding: 11px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+    transition: background .2s ease;
+}
 
-        .botao-secundario {
-            background: #e5e9ee;
-            color: #333;
-        }
+.botao-principal {
+    background: #563C3B;
+    color: #F1E8E5;
+}
 
-        .botao-editar {
-            background: #e8f0fe;
-            color: #2456a6;
-        }
+.botao-principal:hover {
+    background: #76504D;
+}
 
-        .botao-excluir {
-            background: #fde8e8;
-            color: #b42323;
-        }
+.botao-secundario {
+    background: #4A4E57;
+    color: #F1E8E5;
+}
 
-        .tabela-container {
-            overflow-x: auto;
-        }
+.botao-secundario:hover {
+    background: #626875;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 750px;
-        }
+.botao-editar {
+    background: #4A4E57;
+    color: #F1E8E5;
+}
 
-        th,
-        td {
-            text-align: left;
-            padding: 14px 12px;
-            border-bottom: 1px solid #eee;
-        }
+.botao-editar:hover {
+    background: #626875;
+}
 
-        th {
-            background: #f8f9fb;
-            color: #555;
-            font-size: 13px;
-        }
+.botao-excluir {
+    background: #592626;
+    color: #FFE0E0;
+}
 
-        td {
-            font-size: 14px;
-        }
+.botao-excluir:hover {
+    background: #743333;
+}
 
-        .etiqueta {
-            display: inline-block;
-            padding: 5px 9px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
+.tabela-container {
+    overflow-x: auto;
+}
 
-        .etiqueta-receita {
-            background: #d4edda;
-            color: #155724;
-        }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 750px;
+}
 
-        .etiqueta-despesa {
-            background: #f8d7da;
-            color: #721c24;
-        }
+th, td {
+    text-align: left;
+    padding: 14px 12px;
+    border-bottom: 1px solid #563C3B;
+}
 
-        .acoes {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
+th {
+    background: #281315;
+    color: #E8D9D5;
+    font-size: 13px;
+}
 
-        .acoes form {
-            margin: 0;
-        }
+td {
+    font-size: 14px;
+    color: #F1E8E5;
+}
 
-        .acoes button,
-        .acoes a {
-            white-space: nowrap;
-        }
+.etiqueta {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
 
-        .vazio {
-            text-align: center;
-            color: #777;
-            padding: 30px;
-        }
+.etiqueta-receita {
+    background: #244735;
+    color: #D9F2E2;
+}
 
-        .filtros {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
+.etiqueta-despesa {
+    background: #592626;
+    color: #FFE0E0;
+}
 
-        .filtros select {
-            width: auto;
-            min-width: 180px;
-        }
+.acoes {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
 
-        .relatorio-linha {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
-        }
+.acoes form {
+    margin: 0;
+}
 
-        .barra-fundo {
-            height: 10px;
-            background: #edf0f3;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
+.acoes button, .acoes a {
+    white-space: nowrap;
+}
 
-        .barra {
-            height: 100%;
-            background: #d64545;
-            border-radius: 10px;
-        }
+.vazio {
+    text-align: center;
+    color: #B9A6A3;
+    padding: 30px;
+}
 
-        footer {
-            text-align: center;
-            color: #888;
-            padding: 25px;
-            font-size: 13px;
-        }
+.filtros {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
 
-        @media (max-width: 750px) {
-            .resumos {
-                grid-template-columns: 1fr;
-            }
+.filtros select {
+    width: auto;
+    min-width: 180px;
+}
 
-            .formulario {
-                grid-template-columns: 1fr;
-            }
+.relatorio-linha {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #563C3B;
+}
 
-            .campo-completo {
-                grid-column: auto;
-            }
+.barra-fundo {
+    height: 10px;
+    background: #1F0B0A;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 8px;
+}
 
-            .container {
-                width: 94%;
-            }
+.barra {
+    height: 100%;
+    background: #B9827C;
+    border-radius: 10px;
+}
 
-            .cartao {
-                padding: 18px;
-            }
-        }
-    </style>
+footer {
+    text-align: center;
+    color: #B9A6A3;
+    padding: 25px;
+    font-size: 13px;
+}
+
+@media (max-width: 750px) {
+    .resumos, .formulario {
+        grid-template-columns: 1fr;
+    }
+
+    .campo-completo {
+        grid-column: auto;
+    }
+
+    .container {
+        width: 94%;
+    }
+
+    .cartao {
+        padding: 18px;
+    }
+
+    header {
+        padding: 18px 4%;
+    }
+
+    nav {
+        padding: 10px 4% 14px;
+        gap: 5px;
+    }
+
+    nav a {
+        padding: 8px 10px;
+    }
+}
+</style>
 </head>
 
 <body>
@@ -798,7 +793,6 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
 
                     <div class="campo">
                         <label for="descricao">Descrição</label>
-
                         <input
                             type="text"
                             id="descricao"
@@ -812,7 +806,6 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
 
                     <div class="campo">
                         <label for="valor">Valor (R$)</label>
-
                         <input
                             type="text"
                             id="valor"
@@ -829,14 +822,11 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
 
                     <div class="campo">
                         <label for="data">Data</label>
-
                         <input
                             type="date"
                             id="data"
                             name="data"
-                            value="<?php
-                            echo escapar($edicao["data"] ?? date("Y-m-d"));
-                            ?>"
+                            value="<?php echo escapar($edicao["data"] ?? date("Y-m-d")); ?>"
                             required
                         >
                     </div>
@@ -934,49 +924,30 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
                     <tbody>
 
                     <?php if (count($transacoes) === 0): ?>
-
                         <tr>
                             <td colspan="6" class="vazio">
                                 Nenhum lançamento cadastrado.
                             </td>
                         </tr>
-
                     <?php else: ?>
 
                         <?php foreach ($transacoes as $transacao): ?>
-
                             <tr>
                                 <td><?php echo escapar($transacao["descricao"]); ?></td>
-
                                 <td><?php echo escapar($transacao["categoria"]); ?></td>
-
                                 <td>
                                     <?php if ($transacao["tipo"] === "receita"): ?>
-                                        <span class="etiqueta etiqueta-receita">
-                                            Receita
-                                        </span>
+                                        <span class="etiqueta etiqueta-receita">Receita</span>
                                     <?php else: ?>
-                                        <span class="etiqueta etiqueta-despesa">
-                                            Despesa
-                                        </span>
+                                        <span class="etiqueta etiqueta-despesa">Despesa</span>
                                     <?php endif; ?>
                                 </td>
-
-                                <td>
-                                    <?php echo formatar_data($transacao["data"]); ?>
-                                </td>
-
-                                <td class="<?php
-                                    echo $transacao["tipo"] === "receita"
-                                        ? "receita"
-                                        : "despesa";
-                                ?>">
+                                <td><?php echo formatar_data($transacao["data"]); ?></td>
+                                <td class="<?php echo $transacao["tipo"] === "receita" ? "receita" : "despesa"; ?>">
                                     R$ <?php echo formatar_valor($transacao["valor"]); ?>
                                 </td>
-
                                 <td>
                                     <div class="acoes">
-
                                         <a
                                             class="botao botao-editar"
                                             href="transacoes.php?pagina=lancamentos&amp;editar=<?php echo (int) $transacao["id"]; ?>#formulario-lancamento"
@@ -994,7 +965,6 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
                                                 name="id_transacao"
                                                 value="<?php echo (int) $transacao["id"]; ?>"
                                             >
-
                                             <button
                                                 type="submit"
                                                 name="excluir"
@@ -1004,11 +974,9 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
                                                 Excluir
                                             </button>
                                         </form>
-
                                     </div>
                                 </td>
                             </tr>
-
                         <?php endforeach; ?>
 
                     <?php endif; ?>
@@ -1027,39 +995,31 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
             <h2>Consultar período</h2>
 
             <form method="GET" action="transacoes.php" class="filtros">
-
                 <input type="hidden" name="pagina" value="relatorios">
 
                 <label for="periodo">Período:</label>
 
                 <select name="periodo" id="periodo">
-
                     <option value="mes" <?php echo $filtro === "mes" ? "selected" : ""; ?>>
                         Mês atual
                     </option>
-
                     <option value="3meses" <?php echo $filtro === "3meses" ? "selected" : ""; ?>>
                         Últimos 3 meses
                     </option>
-
                     <option value="6meses" <?php echo $filtro === "6meses" ? "selected" : ""; ?>>
                         Últimos 6 meses
                     </option>
-
                     <option value="ano" <?php echo $filtro === "ano" ? "selected" : ""; ?>>
                         Ano atual
                     </option>
-
                     <option value="todos" <?php echo $filtro === "todos" ? "selected" : ""; ?>>
                         Todo o histórico
                     </option>
-
                 </select>
 
                 <button type="submit" class="botao-principal">
                     Filtrar
                 </button>
-
             </form>
 
             <p>
@@ -1121,8 +1081,7 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
                         $despesas_categorias[$nome_categoria] = 0;
                     }
 
-                    $despesas_categorias[$nome_categoria] +=
-                        (float) $transacao["valor"];
+                    $despesas_categorias[$nome_categoria] += (float) $transacao["valor"];
                 }
             }
 
@@ -1130,13 +1089,10 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
             ?>
 
             <?php if (count($despesas_categorias) === 0): ?>
-
                 <p class="vazio">Não existem despesas nesse período.</p>
-
             <?php else: ?>
 
                 <?php foreach ($despesas_categorias as $nome => $valor_categoria): ?>
-
                     <?php
                     $percentual = $total_despesas > 0
                         ? ($valor_categoria / $total_despesas) * 100
@@ -1144,10 +1100,8 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
                     ?>
 
                     <div style="margin-bottom: 22px;">
-
                         <div class="relatorio-linha">
                             <span><?php echo escapar($nome); ?></span>
-
                             <strong>
                                 R$ <?php echo formatar_valor($valor_categoria); ?>
                             </strong>
@@ -1164,7 +1118,6 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
                             <?php echo number_format($percentual, 1, ",", "."); ?>%
                             das despesas
                         </small>
-
                     </div>
 
                 <?php endforeach; ?>
@@ -1178,7 +1131,6 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
             <h2>Lançamentos do período</h2>
 
             <div class="tabela-container">
-
                 <table>
                     <thead>
                         <tr>
@@ -1193,46 +1145,33 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
                     <tbody>
 
                     <?php if (count($transacoes) === 0): ?>
-
                         <tr>
                             <td colspan="5" class="vazio">
                                 Nenhum lançamento encontrado nesse período.
                             </td>
                         </tr>
-
                     <?php else: ?>
 
                         <?php foreach ($transacoes as $transacao): ?>
-
                             <tr>
                                 <td><?php echo escapar($transacao["descricao"]); ?></td>
-
                                 <td><?php echo escapar($transacao["categoria"]); ?></td>
-
                                 <td>
                                     <?php echo $transacao["tipo"] === "receita"
                                         ? "Receita"
                                         : "Despesa"; ?>
                                 </td>
-
                                 <td><?php echo formatar_data($transacao["data"]); ?></td>
-
-                                <td class="<?php
-                                    echo $transacao["tipo"] === "receita"
-                                        ? "receita"
-                                        : "despesa";
-                                ?>">
+                                <td class="<?php echo $transacao["tipo"] === "receita" ? "receita" : "despesa"; ?>">
                                     R$ <?php echo formatar_valor($transacao["valor"]); ?>
                                 </td>
                             </tr>
-
                         <?php endforeach; ?>
 
                     <?php endif; ?>
 
                     </tbody>
                 </table>
-
             </div>
 
         </section>
@@ -1246,48 +1185,47 @@ while ($categoria = mysqli_fetch_assoc($resultado_categorias)) {
 </footer>
 
 <script>
-    const radiosTipo = document.querySelectorAll('input[name="tipo"]');
-    const campoCategoria = document.getElementById("categoria_id");
+const radiosTipo = document.querySelectorAll('input[name="tipo"]');
+const campoCategoria = document.getElementById("categoria_id");
 
-    function atualizarCategorias() {
-        if (!campoCategoria) {
-            return;
-        }
-
-        const selecionado = document.querySelector('input[name="tipo"]:checked');
-
-        if (!selecionado) {
-            return;
-        }
-
-        const tipo = selecionado.value;
-        const opcaoAtual = campoCategoria.value;
-
-        Array.from(campoCategoria.options).forEach(function(opcao) {
-            if (!opcao.value) {
-                opcao.hidden = false;
-                return;
-            }
-
-            opcao.hidden = opcao.dataset.tipo !== tipo;
-        });
-
-        const opcaoSelecionada = campoCategoria.options[campoCategoria.selectedIndex];
-
-        if (
-            opcaoSelecionada &&
-            opcaoSelecionada.value &&
-            opcaoSelecionada.dataset.tipo !== tipo
-        ) {
-            campoCategoria.value = "";
-        }
+function atualizarCategorias() {
+    if (!campoCategoria) {
+        return;
     }
 
-    radiosTipo.forEach(function(radio) {
-        radio.addEventListener("change", atualizarCategorias);
+    const selecionado = document.querySelector('input[name="tipo"]:checked');
+
+    if (!selecionado) {
+        return;
+    }
+
+    const tipo = selecionado.value;
+
+    Array.from(campoCategoria.options).forEach(function(opcao) {
+        if (!opcao.value) {
+            opcao.hidden = false;
+            return;
+        }
+
+        opcao.hidden = opcao.dataset.tipo !== tipo;
     });
 
-    atualizarCategorias();
+    const opcaoSelecionada = campoCategoria.options[campoCategoria.selectedIndex];
+
+    if (
+        opcaoSelecionada &&
+        opcaoSelecionada.value &&
+        opcaoSelecionada.dataset.tipo !== tipo
+    ) {
+        campoCategoria.value = "";
+    }
+}
+
+radiosTipo.forEach(function(radio) {
+    radio.addEventListener("change", atualizarCategorias);
+});
+
+atualizarCategorias();
 </script>
 
 </body>
